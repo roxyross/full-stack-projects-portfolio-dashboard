@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     "AI Resume Analyzer",
     "Next.js Portfolio",
   ],
-  authors: [{ name: "Your Name" }],
+  authors: [{ name: "Ramsha Jawaid" }],
   openGraph: {
     title: "Full Stack Developer Projects Portfolio Dashboard",
     description:
