@@ -15,7 +15,9 @@ import {
   Mail,
   Menu,
   Moon,
+  Pause,
   Play,
+  RotateCcw,
   Rocket,
   Send,
   Sparkles,
@@ -92,6 +94,43 @@ function GlassCard({
 }
 
 function DemoVideoPreview({ project }: { project: PortfolioProject }) {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [activeScene, setActiveScene] = useState(0);
+  const durationMs = 9000;
+
+  useEffect(() => {
+    if (!isPlaying) return;
+
+    const startedAt = Date.now() - (progress / 100) * durationMs;
+    const timer = window.setInterval(() => {
+      const nextProgress = Math.min(((Date.now() - startedAt) / durationMs) * 100, 100);
+      setProgress(nextProgress);
+      setActiveScene(Math.min(Math.floor((nextProgress / 100) * project.demoScenes.length), project.demoScenes.length - 1));
+
+      if (nextProgress >= 100) {
+        setIsPlaying(false);
+        window.clearInterval(timer);
+      }
+    }, 120);
+
+    return () => window.clearInterval(timer);
+  }, [durationMs, isPlaying, progress, project.demoScenes.length]);
+
+  const togglePlayback = () => {
+    if (progress >= 100) {
+      setProgress(0);
+      setActiveScene(0);
+    }
+    setIsPlaying((value) => !value);
+  };
+
+  const restartPlayback = () => {
+    setProgress(0);
+    setActiveScene(0);
+    setIsPlaying(true);
+  };
+
   return (
     <div className="overflow-hidden rounded-xl border border-white/10 bg-black">
       <div className="flex items-center justify-between border-b border-white/10 bg-slate-950 px-4 py-3">
@@ -100,7 +139,9 @@ function DemoVideoPreview({ project }: { project: PortfolioProject }) {
           <span className="h-2.5 w-2.5 rounded-full bg-yellow-300" />
           <span className="h-2.5 w-2.5 rounded-full bg-emerald-300" />
         </div>
-        <p className="text-xs font-medium text-cyan-200">Demo video preview</p>
+        <p className="text-xs font-medium text-cyan-200">
+          {isPlaying ? "Playing generated demo" : progress >= 100 ? "Demo complete" : "Ready to play"}
+        </p>
       </div>
       <div className="relative aspect-video bg-[radial-gradient(circle_at_24%_18%,rgba(34,211,238,0.28),transparent_28%),linear-gradient(135deg,rgba(15,23,42,1),rgba(49,46,129,0.82),rgba(2,6,23,1))] p-4">
         <div className="absolute inset-0 opacity-30 [background-image:linear-gradient(rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px)] [background-size:28px_28px]" />
@@ -116,22 +157,47 @@ function DemoVideoPreview({ project }: { project: PortfolioProject }) {
               <p className="text-xs uppercase text-cyan-200">{project.type} Project Demo</p>
               <h5 className="mt-1 text-lg font-semibold text-white">{project.title}</h5>
             </div>
-            <div className="grid h-12 w-12 place-items-center rounded-full bg-cyan-300 text-slate-950 shadow-lg shadow-cyan-300/30">
-              <Play className="h-5 w-5 fill-current" />
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={togglePlayback}
+                className="grid h-12 w-12 place-items-center rounded-full bg-cyan-300 text-slate-950 shadow-lg shadow-cyan-300/30 transition hover:scale-105"
+                aria-label={isPlaying ? "Pause demo video preview" : "Play demo video preview"}
+              >
+                {isPlaying ? <Pause className="h-5 w-5 fill-current" /> : <Play className="h-5 w-5 fill-current" />}
+              </button>
+              <button
+                type="button"
+                onClick={restartPlayback}
+                className="grid h-12 w-12 place-items-center rounded-full border border-white/10 bg-white/10 text-cyan-100 transition hover:scale-105 hover:border-cyan-300/40"
+                aria-label="Restart demo video preview"
+              >
+                <RotateCcw className="h-5 w-5" />
+              </button>
             </div>
           </div>
           <div className="grid gap-2">
             {project.demoScenes.map((scene, index) => (
               <motion.div
                 key={scene}
-                className="rounded-lg border border-white/10 bg-slate-950/70 p-2.5"
+                className={cx(
+                  "rounded-lg border p-2.5 transition",
+                  index === activeScene
+                    ? "border-cyan-300/50 bg-cyan-300/15 shadow-lg shadow-cyan-300/10"
+                    : "border-white/10 bg-slate-950/70",
+                )}
                 initial={{ x: -12, opacity: 0 }}
                 whileInView={{ x: 0, opacity: 1 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.12 }}
               >
                 <div className="flex items-start gap-2">
-                  <span className="grid h-5 w-5 flex-none place-items-center rounded-full bg-cyan-300/15 text-xs text-cyan-200">
+                  <span
+                    className={cx(
+                      "grid h-5 w-5 flex-none place-items-center rounded-full text-xs",
+                      index === activeScene ? "bg-cyan-300 text-slate-950" : "bg-cyan-300/15 text-cyan-200",
+                    )}
+                  >
                     {index + 1}
                   </span>
                   <p className="text-xs leading-5 text-slate-200">{scene}</p>
@@ -139,13 +205,15 @@ function DemoVideoPreview({ project }: { project: PortfolioProject }) {
               </motion.div>
             ))}
           </div>
-          <motion.div
-            className="absolute bottom-0 left-0 h-1 rounded-full bg-gradient-to-r from-cyan-300 via-blue-400 to-fuchsia-400"
-            initial={{ width: "8%" }}
-            whileInView={{ width: "100%" }}
-            viewport={{ once: true }}
-            transition={{ duration: 4, ease: "easeInOut" }}
-          />
+          <div className="absolute bottom-0 left-0 right-0 h-1 bg-slate-900">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-cyan-300 via-blue-400 to-fuchsia-400 transition-[width] duration-150"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <p className="absolute bottom-3 right-4 rounded-full border border-white/10 bg-black/40 px-3 py-1 text-xs text-cyan-100">
+            {Math.round(progress)}%
+          </p>
         </motion.div>
       </div>
     </div>
@@ -253,7 +321,7 @@ function ProjectModal({
               <div className="space-y-6">
                 <GlassCard className="p-6">
                   <h4 className="mb-4 text-lg font-semibold text-white">Demo Video</h4>
-                  <DemoVideoPreview project={project} />
+                  <DemoVideoPreview key={project.id} project={project} />
                   <p className="mt-4 text-sm leading-6 text-slate-300">
                     Use this scene list to record a 60-90 second walkthrough, then replace the placeholder YouTube URL in the project data.
                   </p>

@@ -18,12 +18,12 @@ export type PortfolioProject = {
 };
 
 export const profile = {
-  name: "Your Name",
+  name: "Ramsha Jawaid",
   role: "Full Stack Developer",
   intro:
     "I build responsive full-stack web applications with modern interfaces, authentication, dashboards, databases, payments, and AI-powered features.",
-  resumeUrl: "/resume.pdf",
-  linkedInUrl: "https://www.linkedin.com/in/your-profile",
+  resumeUrl: "/ramsha-jawaid-cv.pdf",
+  linkedInUrl: "https://www.linkedin.com/in/ramsha-jawaid-902296249",
   githubUrl: "https://github.com/roxyross",
   email: "nexeagent@gmail.com",
   portfolioUrl: "https://your-portfolio.vercel.app",
